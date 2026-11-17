@@ -1,0 +1,2 @@
+{"run_at": "2026-11-17T19:58:36+00:00", "mode": "demo", "indicators": 14, "errors": 0, "to_review": 0, "new_releases": 0, "flags": []}
+{"run_at": "2026-11-17T19:58:37+00:00", "mode": "demo", "indicators": 14, "errors": 2, "to_review": 4, "new_releases": 10, "flags": ["CPILFESL:unusual_move", "CPILFESL:revision", "RSAFS:unusual_move", "FEDFUNDS:fetch_failed", "DGS10:missing_value", "DGS10:unusual_move"]}
