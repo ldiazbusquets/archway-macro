@@ -40,7 +40,7 @@ indicators:
   - {id: GDPC1,  name: "Real GDP",                group: Growth, frequency: Q, units: "Bil. chained 2017 $", headline: qoq_saar, stale_days: 220, z_flag: 2.0}
   - {id: INDPRO, name: "Industrial production",   group: Growth, frequency: M, units: "Index 2017=100",      headline: yoy_pct,  stale_days: 75,  z_flag: 2.0}
   - {id: RSAFS,  name: "Retail sales",            group: Growth, frequency: M, units: "Millions $",          headline: mom_pct,  stale_days: 75,  z_flag: 2.0}
-  - {id: UMCSENT, name: "Consumer sentiment (UMich)", group: Growth, frequency: M, units: "Index 1966:Q1=100", headline: level,  stale_days: 75,  z_flag: 2.0}
+  - {id: UMCSENT, name: "Consumer sentiment (UMich)", group: Growth, frequency: M, units: "Index 1966:Q1=100", headline: level,  stale_days: 110, z_flag: 2.0}  # FRED posts UMich about a month late
 
   # ---- Rates ----
   - {id: FEDFUNDS, name: "Fed funds rate",        group: Rates, frequency: M, units: "%", headline: level, stale_days: 75, z_flag: 2.0}
