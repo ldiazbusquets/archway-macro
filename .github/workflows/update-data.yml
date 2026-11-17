@@ -5,11 +5,11 @@
 name: Update macro data
 
 on:
-  schedule:
-    # Weekdays 14:17 UTC (after most 8:30 ET releases) and 22:17 UTC (after daily rates post)
-    - cron: "17 14 * * 1-5"
-    - cron: "17 22 * * 1-5"
-  workflow_dispatch: {}   # "Run workflow" button for manual refreshes
+  # Manual runs only (Actions → Update macro data → Run workflow). The course
+  # brief says the prototype runs manually. To schedule later, add:
+  #   schedule:
+  #     - cron: "17 14 * * 1-5"   # weekdays, after most 8:30 ET releases
+  workflow_dispatch: {}
 
 permissions:
   contents: write

@@ -55,8 +55,12 @@ def main(argv: list[str] | None = None) -> int:
     out.mkdir(parents=True, exist_ok=True)
     today = pd.Timestamp(args.today) if args.today else pd.Timestamp.today().normalize()
     state = load_json(out / "state.json", {})
-    previous = {r["id"]: r for r in load_json(out / "latest.json", {}).get("indicators", [])}
     mode = "demo" if args.demo else "live"
+    prev_file = load_json(out / "latest.json", {})
+    # Never carry demo numbers into a live run (or the reverse) as "last good data".
+    previous = {r["id"]: r for r in prev_file.get("indicators", [])} if prev_file.get("mode") == mode else {}
+    if prev_file.get("mode") and prev_file.get("mode") != mode:
+        state = {}
 
     session = None
     if not args.demo:

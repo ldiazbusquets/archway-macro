@@ -61,8 +61,8 @@ Any **error** makes the run exit with code 2, so the GitHub Actions run turns re
 1. Create the repo under a **fund or course GitHub organization**, not a personal account.
 2. Settings → Secrets and variables → Actions → add `FRED_API_KEY` (registered to the fund's email). Optional: `ANTHROPIC_API_KEY` for the AI digest.
 3. Settings → Pages → Deploy from branch → `main` / `/docs`.
-4. Actions → "Update macro data" → **Run workflow** once. After that it runs every weekday at 14:17 and 22:17 UTC.
-5. Delete the demo data in `docs/data/` before the first live run (or just let the live run overwrite it).
+4. Actions → "Update macro data" → **Run workflow** whenever you want fresh data (manual by design; see the comment in the workflow file to add a schedule).
+5. The first live run replaces the demo data; demo values are never carried into live output.
 
 ## Changing the watchlist
 
@@ -72,6 +72,6 @@ Edit `config/indicators.yaml`, open a pull request, and have a Macroeconomic Com
 
 - **Reliability:** retries, explicit error flags, red runs, stale-data banner.
 - **Safety & control:** read-only public data; the only write access is to this repo's `docs/data/`. No trading systems.
-- **Reproducibility:** runs in GitHub Actions, not on a laptop. Same input → same numbers.
+- **Reproducibility:** runs in GitHub Actions (or `python -m agent.run` locally), not tied to one laptop. Same input → same numbers.
 - **Maintainability:** plain Python, one config file, tests, this README and `HANDOFF.md`.
 - **Cost:** FRED is free; GitHub Actions and Pages are free for public repos. The AI digest is optional.

@@ -81,3 +81,14 @@ def test_demo_run_writes_dashboard_json(tmp_path):
     fed = next(r for r in d["indicators"] if r["id"] == "FEDFUNDS")
     assert fed["latest_value"] is not None                    # last good data kept, and flagged
     assert len((out / "run_log.jsonl").read_text().splitlines()) == 2
+
+
+def test_live_run_never_reuses_demo_values(tmp_path, monkeypatch):
+    out = tmp_path / "data"
+    main(["--demo", "--out", str(out), "--today", "2026-11-17"])
+    monkeypatch.delenv("FRED_API_KEY", raising=False)         # live run with no key: every fetch fails
+    assert main(["--out", str(out), "--today", "2026-11-17"]) == 2
+    d = json.loads((out / "latest.json").read_text())
+    assert d["mode"] == "live"
+    assert all(r.get("latest_value") is None for r in d["indicators"])
+    assert all(r["flags"][0]["kind"] == "fetch_failed" for r in d["indicators"])

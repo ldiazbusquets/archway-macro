@@ -224,6 +224,7 @@ function fmtChg(r){
   return sign+(Math.abs(c)>=100?Math.round(Math.abs(c)).toLocaleString():Math.abs(c).toFixed(1))+" vs prior";
 }
 function period(r){
+  if(!r.latest_date)return"No data yet";
   const d=new Date(r.latest_date+"T00:00:00");
   if(r.frequency==="M")return d.toLocaleDateString("en-US",{month:"short",year:"numeric"});
   if(r.frequency==="Q")return d.getFullYear()+" Q"+(Math.floor(d.getMonth()/3)+1);
