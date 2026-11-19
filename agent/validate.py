@@ -36,6 +36,12 @@ def check_series(s: pd.Series, ind: dict, metrics: dict, prior_state: dict | Non
         flags.append(flag("unusual_move", "review",
                           f"Latest move is {z:+.1f} standard deviations from the trailing average. Verify against the source before discussing."))
 
+    # 3b. A calculation that can't be done for the latest date (data gap at the source)
+    if metrics.get("headline_gap"):
+        flags.append(flag("calc_gap", "review",
+                          f"Year-over-year change can't be calculated for {metrics['latest_date']}: FRED has no value for "
+                          f"{metrics['headline_gap']}. Shown as blank, not estimated. Decide with the committee how to report it."))
+
     # 4. Revisions to values already published
     if prior_state and prior_state.get("recent"):
         revised = []

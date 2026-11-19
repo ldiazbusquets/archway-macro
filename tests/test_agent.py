@@ -187,3 +187,27 @@ def test_live_run_never_reuses_demo_values(tmp_path, monkeypatch):
     assert d["mode"] == "live"
     assert all(r.get("latest_value") is None for r in d["indicators"])
     assert all(r["flags"][0]["kind"] == "fetch_failed" for r in d["indicators"])
+
+
+def test_yoy_matches_by_date_across_a_data_gap():
+    """FRED has no Oct 2025 CPI (2025 shutdown). y/y must still compare the same month, by date."""
+    from agent.compute import yoy_by_date
+    idx = pd.date_range("2024-09-01", "2026-10-01", freq="MS").drop(pd.Timestamp("2025-10-01"))
+    s = pd.Series(range(100, 100 + len(idx)), index=idx, dtype=float)
+    y = yoy_by_date(s)
+    assert pd.isna(y.loc["2026-10-01"])                                              # year-earlier month missing: blank
+    assert y.loc["2026-09-01"] == pytest.approx((s.loc["2026-09-01"] / s.loc["2025-09-01"] - 1) * 100)
+    assert pd.isna(yoy_by_date(s).get(pd.Timestamp("2025-10-01"), float("nan")))   # gap month: no value
+    # the month after the gap compares to the same month a year earlier, not 13 months back
+    assert y.loc["2025-11-01"] == pytest.approx((s.loc["2025-11-01"] / s.loc["2024-11-01"] - 1) * 100)
+
+
+def test_headline_is_blank_not_stale_when_yoy_cannot_be_computed():
+    idx = pd.date_range("2024-01-01", "2026-10-01", freq="MS").drop(pd.Timestamp("2025-10-01"))
+    s = pd.Series([100 + i for i in range(len(idx))], index=idx, dtype=float)
+    ind = {"id": "CPIAUCSL", "name": "CPI", "frequency": "M", "units": "Index", "headline": "yoy_pct",
+           "stale_days": 75, "z_flag": 2.0}
+    m = compute_metrics(s, ind, 5)
+    assert m["latest_date"] == "2026-10-01" and m["headline"] is None and m["headline_gap"] == "2025-10-01"
+    flags = check_series(s, ind, m, None, pd.Timestamp("2026-11-17"))
+    assert any(f["kind"] == "calc_gap" for f in flags)

@@ -19,9 +19,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from .compute import PERIODS_PER_YEAR
+from .compute import yoy_by_date
 
-CALC_COLUMNS = {"yoy_pct": "yoy_pct", "change": "change"}
+# A calc may add more than one column (change also records which date it compares to).
+CALC_COLUMNS = {"yoy_pct": ["yoy_pct"], "change": ["change", "prior_date"]}
 
 
 def calc_frame(s: pd.Series, ind: dict) -> pd.DataFrame:
@@ -30,9 +31,10 @@ def calc_frame(s: pd.Series, ind: dict) -> pd.DataFrame:
     df = pd.DataFrame({"value": clean})
     for c in ind.get("csv_calcs", []):
         if c == "yoy_pct":
-            df["yoy_pct"] = (clean / clean.shift(PERIODS_PER_YEAR[ind["frequency"]]) - 1) * 100
+            df["yoy_pct"] = yoy_by_date(clean)          # same month last year, by date
         elif c == "change":
-            df["change"] = clean - clean.shift(1)
+            df["change"] = clean - clean.shift(1)      # vs the previous published observation
+            df["prior_date"] = [None] + [d.strftime("%Y-%m-%d") for d in clean.index[:-1]]
         else:
             raise ValueError(f"unknown csv calc: {c}")
     return df
@@ -50,7 +52,7 @@ def update_csv(path: Path, s: pd.Series, ind: dict, retrieved_at: str, start: st
     df = calc_frame(s, ind)
     df = df[df.index >= pd.Timestamp(start)]
     have = read_dates(path)
-    calcs = [CALC_COLUMNS[c] for c in ind.get("csv_calcs", [])]
+    calcs = [col for c in ind.get("csv_calcs", []) for col in CALC_COLUMNS[c]]
     cols = ["date", "series_id", "value", *calcs, "retrieved_at_utc"]
 
     new_rows = []
@@ -60,7 +62,7 @@ def update_csv(path: Path, s: pd.Series, ind: dict, retrieved_at: str, start: st
             continue
         row = {"date": ds, "series_id": ind["id"], "value": _fmt(r["value"]), "retrieved_at_utc": retrieved_at}
         for c in calcs:
-            row[c] = _fmt(r[c])
+            row[c] = r[c] if c == "prior_date" else _fmt(r[c])
         new_rows.append(row)
 
     # Only add dates newer than what we already have, unless the file is new.
@@ -92,6 +94,8 @@ def update_csv(path: Path, s: pd.Series, ind: dict, retrieved_at: str, start: st
 
 
 def _fmt(v) -> str:
+    if isinstance(v, str):
+        return v
     if v is None or pd.isna(v):
         return ""
     return f"{float(v):.6g}" if abs(float(v)) < 1e6 else f"{float(v):.2f}"

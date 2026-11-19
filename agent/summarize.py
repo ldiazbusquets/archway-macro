@@ -47,6 +47,9 @@ def fmt_headline(v: float | None, ind: dict, signed: bool = False) -> str:
 def rule_note(ind: dict, m: dict) -> str:
     when = period_label(m["latest_date"], ind["frequency"])
     if m["headline"] is None:
+        if m.get("headline_gap"):
+            return (f"{ind['name']}: index at {m['latest_value']:g} in {when}; the year-over-year change isn't available "
+                    f"because FRED has no value for {period_label(m['headline_gap'], ind['frequency'])}.")
         return f"{ind['name']}: not enough history to compute the headline figure."
     prep = "in" if ind["frequency"] in ("M", "Q") else "for" if ind["frequency"] == "W" else "on"
     if ind["headline"] == "diff" and ind["units"] == "Thousands":

@@ -57,6 +57,11 @@ def agent_csv(path: Path) -> list[dict]:
         return list(csv.DictReader(f))
 
 
+def _year_earlier(d: str) -> str:
+    y, m, day = d.split("-")
+    return f"{int(y) - 1}-{m}-{day}"
+
+
 def close(a: float, b: float) -> bool:
     return abs(a - b) <= max(1e-6, abs(b) * 1e-6)
 
@@ -89,7 +94,10 @@ def main() -> int:
         rows = agent_csv(path)
         fred = fred_graph(sid)
         step = PERIODS[ind["frequency"]]
-        picks = [rows[-1], rows[max(0, len(rows) - 1 - step)]]   # latest, and about a year earlier
+        # latest, and the same date a year earlier if FRED has it (else about a year of rows back)
+        year_ago = _year_earlier(rows[-1]["date"])
+        earlier = next((r for r in rows if r["date"] == year_ago), rows[max(0, len(rows) - 1 - step)])
+        picks = [rows[-1], earlier]
         for r in picks:
             fv = fred.get(r["date"])
             good = fv is not None and close(float(r["value"]), fv)
@@ -105,7 +113,12 @@ def main() -> int:
                 ok_all = False
                 continue
             if c == "yoy_pct":
-                prev_d = dates[i - step]
+                prev_d = _year_earlier(latest["date"])          # same month last year, by date
+                if prev_d not in fred:
+                    good = latest.get(c, "") == ""
+                    ok_all &= good
+                    calc_lines.append(f"| {sid} | {latest['date']} | y/y needs {prev_d} | FRED has no {prev_d} value | {latest.get(c) or 'blank'} | {'PASS' if good else 'FAIL'} |")
+                    continue
                 hand = (fred[latest["date"]] / fred[prev_d] - 1) * 100
                 formula = f"({fred[latest['date']]:g} / {fred[prev_d]:g} − 1) × 100  [vs {prev_d}]"
             else:

@@ -59,6 +59,7 @@ Tests (offline): `pytest -q`. Independent check against FRED: `python verify/ver
 | `stale` | error | No new observation in longer than expected | Check the release calendar |
 | `unusual_move` | review | Latest move is beyond the z-score threshold | Verify against the source before discussing |
 | `revision` | review | An already-published value changed | Note the revision; update any saved analysis |
+| `calc_gap` | review | y/y can't be computed because the year-earlier value is missing at FRED | Left blank (never estimated); decide how to report it |
 | `new_release` | info | A new observation arrived | Nothing; it shows in "What changed" |
 
 Any **error** makes the run exit with code 2, so the GitHub Actions run turns red and maintainers get an email. A failed fetch never changes a saved CSV; the last good values stay visible and marked. The dashboard warns if the agent hasn't run in a week. Nothing fails silently.

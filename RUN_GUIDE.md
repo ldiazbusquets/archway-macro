@@ -56,3 +56,4 @@ Never put the API key in a file, a notebook or a commit. On GitHub it lives in *
 | **Error:** stale | No new data for longer than expected | Check the release calendar (e.g., a government shutdown) |
 | **Review:** unusual move | Latest change is far outside the last 5 years' range | Confirm on FRED before discussing it |
 | **Review:** revision | FRED changed a value we already saved | Note it; the CSV keeps the original, so update any analysis by hand |
+| **Review:** calc gap | A calculation can't be done because FRED is missing a value (e.g. no Oct 2025 CPI after the 2025 shutdown) | Left blank on purpose; agree with the committee how to report that month |
