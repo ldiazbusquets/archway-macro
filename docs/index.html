@@ -216,7 +216,7 @@ html.lt .state,html.lt .banner{background:rgba(255,255,255,.6);border-color:rgba
     <div class="ph"><h2>Watchlist</h2><div class="seg" id="seg" role="group" aria-label="Filter by group"></div></div>
     <div class="cols"><span>Indicator</span><span class="r">Latest</span><span class="r hc">Change vs prior</span><span class="ht">5-year trend</span><span class="hp">Period</span><span class="r">Status</span></div>
     <div id="rows"></div>
-    <div class="foot-note">Click a row for the full history and flags. The agent retrieves, computes and flags; students verify and interpret.</div>
+    <div class="foot-note" id="statusline">Click a row for the full history and flags. The agent retrieves, computes and flags; students verify and interpret.</div>
   </section>
 </main>
 
@@ -299,7 +299,7 @@ function render(d){
   const st=$("state");
   if(s.errors){st.className="state bad";st.innerHTML=`<i></i>${s.errors} error${s.errors>1?"s":""}${s.to_review?` <small>· ${s.to_review} to review</small>`:""}`;}
   else if(s.to_review){st.className="state warn";st.innerHTML=`<i></i>${s.to_review} to review`;}
-  else{st.className="state";st.innerHTML=`<i></i>All clear <small>· ${s.new_releases?s.new_releases+" new":"no new releases"}</small>`;}
+  else{const ra=s.rows_added??s.new_releases;st.className="state";st.innerHTML=`<i></i>All clear <small>· ${ra?ra+" new rows saved":"no new data"}</small>`;}
   let b="";
   if(d.mode==="demo")b+=`<div class="banner"><b>Demo data.</b><span>Synthetic numbers for a walkthrough, not real economic data. The live version pulls the same series from FRED.</span></div>`;
   const hrs=(Date.now()-run.getTime())/36e5;
@@ -311,7 +311,7 @@ function render(d){
   $("qcount").textContent=items.length?items.length+" to review":"all passed";
   const n=k=>d.indicators.filter(r=>r.flags.some(f=>f.kind===k)).length, tot=d.indicators.length, got=tot-n("fetch_failed");
   const tile=(lbl,v,cls,sfx="")=>`<div><small>${lbl}</small><b class="${cls}">${v}${sfx?`<span>${sfx}</span>`:""}</b></div>`;
-  $("checks").innerHTML=tile("Fetched",got,got===tot?"good":"bad","/ "+tot)+tile("New releases",s.new_releases,"")+tile("Missing values",n("missing_value"),n("missing_value")?"bad":"")
+  $("checks").innerHTML=tile("Fetched",got,got===tot?"good":"bad","/ "+tot)+tile("Rows added",s.rows_added??s.new_releases,"")+tile("Missing values",n("missing_value"),n("missing_value")?"bad":"")
     +tile("Stale series",n("stale"),n("stale")?"bad":"")+tile("Unusual moves",n("unusual_move"),n("unusual_move")?"warn":"")+tile("Revisions",n("revision"),n("revision")?"warn":"");
   const done=store("archway-verified")||{};
   $("queue").innerHTML=items.length?`<ul class="list">${items.map(it=>`<li class="${done[it.key]?"done":""}"><span class="sev ${it.f.severity}">${it.f.severity.toUpperCase()}</span><div><b>${esc(it.r.name)}</b> · ${esc(it.f.message)} <a href="${esc(it.r.source_url)}" target="_blank" rel="noopener">Check source ↗</a><label class="vf"><input type="checkbox" data-k="${esc(it.key)}" ${done[it.key]?"checked":""}>Verified</label></div></li>`).join("")}</ul>`
@@ -325,6 +325,7 @@ function render(d){
   $("seg").innerHTML=groups.map(g=>`<button type="button" aria-pressed="${g===FILTER}" data-g="${esc(g)}">${esc(g)}</button>`).join("");
   $("seg").querySelectorAll("button").forEach(b=>b.onclick=()=>{FILTER=b.dataset.g;render(DATA);});
   drawRows();
+  if(d.status_lines&&d.status_lines.length)$("statusline").innerHTML=d.status_lines.map(esc).join("<br>")+`<br><span style="opacity:.7">Click a row for history, flags and the saved CSV. Placeholder indicators from Archway's published reports, to confirm with the committee.</span>`;
   $("foot").textContent=`Agent v${d.agent_version} · ${d.mode} mode`;
 }
 
@@ -352,6 +353,7 @@ function openDetail(id){
   ${bigChart(r)}<div class="kv">${kv.map(([k,v])=>`<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join("")}</div>
   <p class="note">${esc(r.note)}</p>
   ${r.flags.length?`<ul class="fl">${r.flags.map(f=>`<li><span class="sev ${f.severity}">${f.severity==="info"?"NEW":f.severity.toUpperCase()}</span>${esc(f.message)}</li>`).join("")}</ul>`:""}
+  ${r.csv?`<p class="meta" style="margin-top:14px">Saved history: <a href="data/${esc(r.csv.file)}" target="_blank" rel="noopener">${esc(r.csv.file)}</a> · ${r.csv.rows} rows · ${r.csv.added} added this run</p>`:""}
   <div class="human"><b>For the committee:</b> what does this mean for allocation and sector weights? That call stays with students.</div>`;
   $("scrim").classList.add("open");$("x").focus();
 }

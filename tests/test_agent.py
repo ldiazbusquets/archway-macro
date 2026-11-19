@@ -5,6 +5,7 @@ import json
 import numpy as np
 import pandas as pd
 import pytest
+from pathlib import Path
 
 from agent.compute import compute_metrics, headline_series, zscore_latest
 from agent.run import main
@@ -67,20 +68,114 @@ def test_revision_and_new_release():
     assert {"revision", "new_release"} <= kinds and "stale" not in kinds
 
 
-# ---------- end to end ----------
+# ---------- end to end (demo data, offline) ----------
 
-def test_demo_run_writes_dashboard_json(tmp_path):
+import csv
+import shutil
+
+import agent.run as run_mod
+from agent import demo as demo_mod
+
+
+def _rows(path):
+    with open(path, newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def test_demo_scenario_raises_each_flag(tmp_path):
     out = tmp_path / "data"
     assert main(["--demo", "--out", str(out), "--today", "2026-11-03"]) == 0
     code = main(["--demo", "--scenario", "--out", str(out), "--today", "2026-11-17"])
     assert code == 2                                          # errors must fail the run visibly
     d = json.loads((out / "latest.json").read_text())
-    assert d["mode"] == "demo" and len(d["indicators"]) == 14
+    assert d["mode"] == "demo" and len(d["indicators"]) == 3
     kinds = {f["kind"] for r in d["indicators"] for f in r["flags"]}
-    assert {"revision", "unusual_move", "missing_value", "fetch_failed", "new_release"} <= kinds
-    fed = next(r for r in d["indicators"] if r["id"] == "FEDFUNDS")
-    assert fed["latest_value"] is not None                    # last good data kept, and flagged
+    assert {"revision", "unusual_move", "missing_value", "new_release"} <= kinds
     assert len((out / "run_log.jsonl").read_text().splitlines()) == 2
+
+
+def test_run_twice_adds_no_duplicate_dates(tmp_path):
+    """Brief: run the agent twice; the second run must not duplicate rows."""
+    out = tmp_path / "data"
+    main(["--demo", "--out", str(out), "--today", "2026-11-17"])
+    first = {p.name: p.read_bytes() for p in (out / "csv").glob("*.csv")}
+    main(["--demo", "--out", str(out), "--today", "2026-11-17"])
+    for p in (out / "csv").glob("*.csv"):
+        assert p.read_bytes() == first[p.name]                # nothing appended or rewritten
+        dates = [r["date"] for r in _rows(p)]
+        assert len(dates) == len(set(dates))
+
+
+def test_no_new_data_is_reported(tmp_path):
+    """Brief: the status must say plainly when nothing new came out."""
+    out = tmp_path / "data"
+    main(["--demo", "--out", str(out), "--today", "2026-11-17"])
+    main(["--demo", "--out", str(out), "--today", "2026-11-17"])
+    status = (out / "status.txt").read_text()
+    assert "No new data for any indicator" in status
+    assert status.count("no new data since the last run") == 3
+
+
+def test_new_observations_are_appended_in_order(tmp_path):
+    out = tmp_path / "data"
+    main(["--demo", "--out", str(out), "--today", "2026-11-03"])
+    before = len(_rows(out / "csv" / "CPIAUCSL.csv"))
+    main(["--demo", "--out", str(out), "--today", "2026-11-17"])   # October CPI released Nov 13
+    rows = _rows(out / "csv" / "CPIAUCSL.csv")
+    assert len(rows) == before + 1 and rows[-1]["date"] == "2026-10-01"
+    assert [r["date"] for r in rows] == sorted(r["date"] for r in rows)
+
+
+def test_csv_calculation_matches_hand_calculation(tmp_path):
+    """Brief: check one calculated value by hand. y/y % = (this month / same month last year - 1) x 100."""
+    out = tmp_path / "data"
+    main(["--demo", "--out", str(out), "--today", "2026-11-17"])
+    rows = {r["date"]: r for r in _rows(out / "csv" / "CPIAUCSL.csv")}
+    now, year_ago = float(rows["2026-10-01"]["value"]), float(rows["2025-10-01"]["value"])
+    assert float(rows["2026-10-01"]["yoy_pct"]) == pytest.approx((now / year_ago - 1) * 100, abs=1e-3)
+    u = {r["date"]: r for r in _rows(out / "csv" / "UNRATE.csv")}
+    assert float(u["2026-10-01"]["change"]) == pytest.approx(float(u["2026-10-01"]["value"]) - float(u["2026-09-01"]["value"]), abs=1e-6)
+
+
+def test_failed_fetch_keeps_saved_csv_and_last_good_values(tmp_path, monkeypatch):
+    """Brief: when retrieval fails, keep the last valid results and report the problem."""
+    out = tmp_path / "data"
+    main(["--demo", "--out", str(out), "--today", "2026-11-03"])
+    saved = (out / "csv" / "CPIAUCSL.csv").read_bytes()
+    good = next(r for r in json.loads((out / "latest.json").read_text())["indicators"] if r["id"] == "CPIAUCSL")
+
+    real = demo_mod.demo_series
+    def flaky(sid, *a, **k):
+        if sid == "CPIAUCSL":
+            raise ConnectionError("simulated timeout")
+        return real(sid, *a, **k)
+    monkeypatch.setattr(run_mod, "demo_series", flaky)
+
+    assert main(["--demo", "--out", str(out), "--today", "2026-11-17"]) == 2
+    assert (out / "csv" / "CPIAUCSL.csv").read_bytes() == saved
+    cpi = next(r for r in json.loads((out / "latest.json").read_text())["indicators"] if r["id"] == "CPIAUCSL")
+    assert cpi["latest_value"] == good["latest_value"] and cpi["flags"][0]["kind"] == "fetch_failed"
+    assert "Saved CSV left unchanged" in (out / "status.txt").read_text()
+
+
+def test_invalid_series_id_is_reported_and_others_still_run(tmp_path):
+    """Brief: test an invalid series ID."""
+    cfg = tmp_path / "bad.yaml"
+    text = open("config/indicators.yaml").read().replace("id: UNRATE,", "id: UNRATEXX,")
+    cfg.write_text(text)
+    out = tmp_path / "data"
+    assert main(["--demo", "--config", str(cfg), "--out", str(out), "--today", "2026-11-17"]) == 2
+    status = (out / "status.txt").read_text()
+    assert "UNRATEXX: ERROR" in status and "does not exist" in status
+    assert (out / "csv" / "CPIAUCSL.csv").exists() and not (out / "csv" / "UNRATEXX.csv").exists()
+
+
+def test_demo_defaults_to_its_own_folder(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    shutil.copytree(Path(__file__).resolve().parents[1] / "config", tmp_path / "config")
+    main(["--demo", "--today", "2026-11-17"])
+    assert (tmp_path / "demo_output" / "latest.json").exists()
+    assert not (tmp_path / "docs").exists()
 
 
 def test_live_run_never_reuses_demo_values(tmp_path, monkeypatch):

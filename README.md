@@ -2,21 +2,25 @@
 
 FIN 414 · Archway Investment Fund · Macroeconomic Committee
 
-An agent that **retrieves** the fund's macro indicators from FRED, **detects** new releases, **computes** changes, **flags** anything a student needs to check, and **publishes** a dashboard. Choosing indicators, verifying flags and interpreting what the numbers mean stay with students.
+An agent that **retrieves** 3 macro indicators from FRED, **saves** new observations to a CSV per indicator (never duplicating a date), **computes** the changes Archway uses, **flags** anything a student needs to check, and **reports** a plain-English status, including "no new data". Choosing indicators, verifying flags and interpreting the numbers stay with students.
+
+**Start here:** [RUN_GUIDE.md](RUN_GUIDE.md) (how to run and check it) · [verification/REPORT.md](verification/REPORT.md) (latest independent check against FRED)
 
 ```
-FRED API ─► fetch ─► detect release ─► compute ─► validate & flag ─► docs/data/latest.json ─► dashboard (GitHub Pages)
-                                                                                         └─► Review queue ─► students verify & interpret
+FRED API ─► retrieve ─► save new rows (csv/<ID>.csv) ─► calculate ─► validate & flag ─► status.txt + dashboard
+                                                                                     └─► students verify & interpret
 ```
+
+**Scope:** the course brief allows 1–3 indicators that Archway already monitors. The current three (CPI y/y, unemployment rate, 10Y–2Y yield curve) are placeholders from the Macroeconomic Committee's published reports, to confirm with Archway.
 
 ## Quick start
 
 ```bash
 pip install -r requirements.txt
 
-# Offline demo (synthetic data, labeled DEMO everywhere)
+# Offline demo (synthetic data, labeled DEMO, written to demo_output/)
 python -m agent.run --demo --today 2026-11-03
-python -m agent.run --demo --scenario --today 2026-11-17   # injects a revision, spike, missing value, failed fetch
+python -m agent.run --demo --scenario --today 2026-11-17   # injects a revision, a spike and a missing value
 
 # Live
 export FRED_API_KEY=...        # free key: https://fred.stlouisfed.org/docs/api/api_key.html
@@ -26,22 +30,25 @@ python -m agent.run
 cd docs && python -m http.server 8000   # open http://localhost:8000
 ```
 
-Tests (offline): `pytest -q`
+Tests (offline): `pytest -q`. Independent check against FRED: `python verify/verify_fred.py` (or the **Verify against FRED** workflow).
 
 ## Repository layout
 
 | Path | What it is | Who changes it |
 |---|---|---|
-| `config/indicators.yaml` | The watchlist: series, transforms, flag thresholds | **Students** (Macroeconomic Committee) |
+| `config/indicators.yaml` | The watchlist: series, calculations, flag thresholds | **Students** (Macroeconomic Committee) |
 | `agent/fred.py` | FRED API client with retries | Maintainers |
-| `agent/compute.py` | y/y, m/m, q/q annualized, changes, z-scores. Deterministic, no AI | Maintainers |
+| `agent/history.py` | Per-indicator CSV: append new dates only, never rewrite saved rows | Maintainers |
+| `agent/compute.py` | Dashboard numbers: y/y, changes, trend, z-scores. Deterministic, no AI | Maintainers |
 | `agent/validate.py` | Flags: missing value, stale, unusual move, revision, new release | Maintainers |
 | `agent/summarize.py` | Rule-based notes; optional AI digest (off without a key) | Maintainers |
 | `agent/run.py` | Orchestrates one run, writes outputs, sets exit code | Maintainers |
 | `agent/demo.py` | Synthetic data for demos and tests | Maintainers |
 | `docs/index.html` | Dashboard (static, no build step) | Maintainers |
-| `docs/data/` | Agent output: `latest.json`, `state.json`, `run_log.jsonl` | **The agent only** |
-| `.github/workflows/` | Scheduled runs and tests | Maintainers |
+| `docs/data/` | Agent output: `csv/<ID>.csv`, `status.txt`, `latest.json`, `state.json`, `run_log.jsonl` | **The agent only** |
+| `verify/verify_fred.py` | Independent checker (no agent code): source comparison, hand calc, run twice, invalid ID | Maintainers |
+| `verification/REPORT.md` | Latest checker output, for Assignment 3 | **The checker only** |
+| `.github/workflows/` | Manual data run, verification run, tests on every push | Maintainers |
 
 ## Flags
 
@@ -54,7 +61,7 @@ Tests (offline): `pytest -q`
 | `revision` | review | An already-published value changed | Note the revision; update any saved analysis |
 | `new_release` | info | A new observation arrived | Nothing; it shows in "What changed" |
 
-Any **error** makes the run exit with code 2, so the GitHub Actions run turns red and maintainers get an email. The dashboard also warns if the agent hasn't run in 3 days. Nothing fails silently.
+Any **error** makes the run exit with code 2, so the GitHub Actions run turns red and maintainers get an email. A failed fetch never changes a saved CSV; the last good values stay visible and marked. The dashboard warns if the agent hasn't run in a week. Nothing fails silently.
 
 ## Deploying (one time, fund-owned account)
 
@@ -62,7 +69,7 @@ Any **error** makes the run exit with code 2, so the GitHub Actions run turns re
 2. Settings → Secrets and variables → Actions → add `FRED_API_KEY` (registered to the fund's email). Optional: `ANTHROPIC_API_KEY` for the AI digest.
 3. Settings → Pages → Deploy from branch → `main` / `/docs`.
 4. Actions → "Update macro data" → **Run workflow** whenever you want fresh data (manual by design; see the comment in the workflow file to add a schedule).
-5. The first live run replaces the demo data; demo values are never carried into live output.
+5. Demo runs write to `demo_output/` (ignored by git), so demo values never reach `docs/data/`.
 
 ## Changing the watchlist
 

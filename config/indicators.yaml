@@ -1,7 +1,11 @@
 # Archway Macro-Monitoring Agent: indicator watchlist
 #
-# DRAFT LIST. The final list is set by the Macroeconomic Committee and
-# confirmed in Assignment 1. Students own this file; the agent never edits it.
+# SCOPE: the course brief allows 1 to 3 indicators that Archway already monitors.
+# These three are PLACEHOLDERS taken from the indicators the Macroeconomic
+# Committee discusses in its own published reports (2023 Annual Report:
+# CPI inflation y/y, the unemployment rate, the Treasury yield curve).
+# NEEDS CLARIFICATION: confirm the final list, and the calculations, with Archway.
+# Students own this file; the agent never edits it.
 #
 # Fields
 #   id          FRED series ID (https://fred.stlouisfed.org)
@@ -9,41 +13,26 @@
 #   group       Dashboard section
 #   frequency   D, W, M or Q (how often FRED publishes it)
 #   units       How the raw value is expressed
-#   headline    Which change to show first:
-#                 yoy_pct   year-over-year % change (price indexes, activity levels)
-#                 mom_pct   month-over-month % change
-#                 qoq_saar  quarter-over-quarter, annualized % (GDP)
-#                 diff      change in level (rates in pp, payrolls in thousands)
-#                 level     the value itself (rates, unemployment, sentiment)
+#   headline    The main number shown on the dashboard:
+#                 yoy_pct  year-over-year % change      level  the value itself
+#   csv_calcs   Calculated columns saved in the CSV (only what Archway uses):
+#                 yoy_pct  year-over-year % change
+#                 change   change from the prior observation (in the series' units)
 #   stale_days  Flag if the latest observation's reference date is older than this.
 #               FRED dates monthly data to the 1st of the month and releases it weeks
 #               later, so a healthy monthly series is often 40-70 days "old".
-#   z_flag      Flag a move when |z-score of latest change| exceeds this
+#   z_flag      Flag a move for student review when |z-score of latest change| exceeds this
 
 settings:
-  history_start: "2000-01-01"
-  z_window_years: 5          # trailing window for "unusual move" z-scores
-  output_dir: "docs/data"    # GitHub Pages serves /docs
+  history_start: "2000-01-01"   # history pulled for calculations and the trend line
+  csv_start: "2020-01-01"       # first date written to each CSV on its first run
+  z_window_years: 5             # trailing window for "unusual move" checks
+  output_dir: "docs/data"       # GitHub Pages serves /docs
 
 indicators:
-  # ---- Inflation ----
-  - {id: CPIAUCSL, name: "CPI (all items)",      group: Inflation, frequency: M, units: "Index 1982-84=100", headline: yoy_pct, stale_days: 75, z_flag: 2.0}
-  - {id: CPILFESL, name: "Core CPI",             group: Inflation, frequency: M, units: "Index 1982-84=100", headline: yoy_pct, stale_days: 75, z_flag: 2.0}
-  - {id: PCEPILFE, name: "Core PCE price index", group: Inflation, frequency: M, units: "Index 2017=100",    headline: yoy_pct, stale_days: 95, z_flag: 2.0}
-
-  # ---- Labor ----
-  - {id: UNRATE, name: "Unemployment rate",       group: Labor, frequency: M, units: "%",         headline: level, stale_days: 75, z_flag: 2.0}
-  - {id: PAYEMS, name: "Nonfarm payrolls",        group: Labor, frequency: M, units: "Thousands", headline: diff,  stale_days: 75, z_flag: 2.0}
-  - {id: ICSA,   name: "Initial jobless claims",  group: Labor, frequency: W, units: "Claims",    headline: level, stale_days: 14, z_flag: 2.5}
-
-  # ---- Growth ----
-  - {id: GDPC1,  name: "Real GDP",                group: Growth, frequency: Q, units: "Bil. chained 2017 $", headline: qoq_saar, stale_days: 220, z_flag: 2.0}
-  - {id: INDPRO, name: "Industrial production",   group: Growth, frequency: M, units: "Index 2017=100",      headline: yoy_pct,  stale_days: 75,  z_flag: 2.0}
-  - {id: RSAFS,  name: "Retail sales",            group: Growth, frequency: M, units: "Millions $",          headline: mom_pct,  stale_days: 75,  z_flag: 2.0}
-  - {id: UMCSENT, name: "Consumer sentiment (UMich)", group: Growth, frequency: M, units: "Index 1966:Q1=100", headline: level,  stale_days: 110, z_flag: 2.0}  # FRED posts UMich about a month late
-
-  # ---- Rates ----
-  - {id: FEDFUNDS, name: "Fed funds rate",        group: Rates, frequency: M, units: "%", headline: level, stale_days: 75, z_flag: 2.0}
-  - {id: DGS2,     name: "2-year Treasury yield", group: Rates, frequency: D, units: "%", headline: level, stale_days: 7,  z_flag: 2.5}
-  - {id: DGS10,    name: "10-year Treasury yield", group: Rates, frequency: D, units: "%", headline: level, stale_days: 7, z_flag: 2.5}
-  - {id: T10Y2Y,   name: "10Y minus 2Y spread",   group: Rates, frequency: D, units: "pp", headline: level, stale_days: 7, z_flag: 2.5}
+  - {id: CPIAUCSL, name: "CPI inflation (all items)", group: Inflation, frequency: M, units: "Index 1982-84=100",
+     headline: yoy_pct, csv_calcs: [yoy_pct], stale_days: 75, z_flag: 2.0}
+  - {id: UNRATE, name: "Unemployment rate", group: Labor, frequency: M, units: "%",
+     headline: level, csv_calcs: [change], stale_days: 75, z_flag: 2.0}
+  - {id: T10Y2Y, name: "Yield curve: 10Y minus 2Y", group: Rates, frequency: D, units: "pp",
+     headline: level, csv_calcs: [change], stale_days: 7, z_flag: 2.5}

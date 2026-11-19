@@ -49,10 +49,9 @@ def release_date(series_id: str, frequency: str, d: pd.Timestamp) -> pd.Timestam
 
 # Demo-only "events" so every flag type shows up in a classroom demo.
 SCENARIO = {
-    "CPILFESL": "revise",      # an already-published value changes
-    "RSAFS": "spike",          # unusual move
-    "DGS10": "missing",        # FRED returns "." for the latest date
-    "FEDFUNDS": "fetch_fail",  # API request fails
+    "CPIAUCSL": "revise",      # an already-published value changes
+    "UNRATE": "spike",         # unusual move
+    "T10Y2Y": "missing",       # FRED returns "." for the latest date
 }
 
 
@@ -62,7 +61,7 @@ def apply_scenario(series_id: str, s: pd.Series) -> pd.Series:
     if kind == "revise" and len(s) > 2:
         s.iloc[-2] = round(s.iloc[-2] * 1.0015, 3)
     elif kind == "spike":
-        s.iloc[-1] = round(s.iloc[-2] * 1.032, 3)
+        s.iloc[-1] = round(s.iloc[-2] + 0.6, 3)
     elif kind == "missing":
         s.iloc[-1] = float("nan")
     elif kind == "fetch_fail":
@@ -80,6 +79,9 @@ def demo_series(series_id: str, frequency: str, start: str, end: str | None = No
     rng = np.random.default_rng(zlib.crc32(series_id.encode()))
     n = len(idx)
 
+    if series_id not in SHAPES and series_id != "T10Y2Y":
+        # behave like FRED for an unknown ID
+        raise ValueError(f"Bad Request. The series {series_id} does not exist.")
     if series_id == "T10Y2Y":
         a, b = demo_series("DGS10", frequency, start, end), demo_series("DGS2", frequency, start, end)
         return (a - b).rename(series_id).round(2)
