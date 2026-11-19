@@ -1,13 +1,13 @@
 {
  "agent_version": "0.1.0",
  "mode": "live",
- "run_at": "2026-11-19T15:37:27+00:00",
+ "run_at": "2026-11-19T15:40:20+00:00",
  "as_of": "2026-11-19",
  "summary": {
   "indicators": 3,
   "errors": 0,
-  "to_review": 0,
-  "new_releases": 1,
+  "to_review": 1,
+  "new_releases": 0,
   "rows_added": 1883
  },
  "status_lines": [
@@ -30,10 +30,15 @@
    "latest_value": 337.476,
    "prior_date": "2026-09-01",
    "prior_value": 336.298,
-   "headline": 4.081,
-   "headline_prior": 4.023,
+   "headline": null,
+   "headline_prior": 3.717,
+   "headline_gap": "2025-10-01",
    "z_move": -0.0,
    "spark": [
+    [
+     "2021-09-01",
+     5.351
+    ],
     [
      "2021-10-01",
      6.235
@@ -228,59 +233,61 @@
     ],
     [
      "2025-11-01",
-     2.988
+     2.696
     ],
     [
      "2025-12-01",
-     3.002
+     2.653
     ],
     [
      "2026-01-01",
-     2.829
+     2.391
     ],
     [
      "2026-02-01",
-     2.665
+     2.434
     ],
     [
      "2026-03-01",
-     3.32
+     3.286
     ],
     [
      "2026-04-01",
-     3.947
+     3.779
     ],
     [
      "2026-05-01",
-     4.27
+     4.167
     ],
     [
      "2026-06-01",
-     3.727
+     3.464
     ],
     [
      "2026-07-01",
-     3.54
+     3.304
     ],
     [
      "2026-08-01",
-     3.713
+     3.353
     ],
     [
      "2026-09-01",
-     4.023
-    ],
-    [
-     "2026-10-01",
-     4.081
+     3.717
     ]
    ],
-   "headline_change": 0.058,
+   "headline_change": null,
    "mom_pct": 0.35,
-   "yoy_pct": 4.081,
+   "yoy_pct": null,
    "fred_last_updated": "2026-11-10 08:12:46-06",
-   "flags": [],
-   "note": "CPI inflation (all items) was 4.1% y/y in Oct 2026, up 0.1 pp from 4.0.",
+   "flags": [
+    {
+     "kind": "calc_gap",
+     "severity": "review",
+     "message": "Year-over-year change can't be calculated for 2026-10-01: FRED has no value for 2025-10-01. Shown as blank, not estimated. Decide with the committee how to report it."
+    }
+   ],
+   "note": "CPI inflation (all items): index at 337.476 in Oct 2026; the year-over-year change isn't available because FRED has no value for Oct 2025.",
    "csv": {
     "file": "csv/CPIAUCSL.csv",
     "added": 81,
@@ -302,6 +309,7 @@
    "prior_value": 4.2,
    "headline": 4.1,
    "headline_prior": 4.2,
+   "headline_gap": null,
    "z_move": -0.63,
    "spark": [
     [
@@ -570,6 +578,7 @@
    "prior_value": 0.3,
    "headline": 0.27,
    "headline_prior": 0.3,
+   "headline_gap": null,
    "z_move": -0.68,
    "spark": [
     [
@@ -1615,13 +1624,7 @@
    ],
    "headline_change": -0.03,
    "fred_last_updated": "2026-11-18 16:04:23-06",
-   "flags": [
-    {
-     "kind": "new_release",
-     "severity": "info",
-     "message": "New observation for 2026-11-18."
-    }
-   ],
+   "flags": [],
    "note": "Yield curve: 10Y minus 2Y was 0.27 pp on Nov 18, 2026, down 3 bp.",
    "csv": {
     "file": "csv/T10Y2Y.csv",
