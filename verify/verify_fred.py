@@ -106,29 +106,36 @@ def main() -> int:
 
         latest = rows[-1]
         dates = sorted(fred)
-        i = dates.index(latest["date"]) if latest["date"] in dates else None
-        for c in ind.get("csv_calcs", []):
-            if i is None:
-                calc_lines.append(f"| {sid} | {latest['date']} | {c} | date not on FRED | {latest.get(c)} | FAIL |")
-                ok_all = False
-                continue
-            if c == "yoy_pct":
-                prev_d = _year_earlier(latest["date"])          # same month last year, by date
-                if prev_d not in fred:
-                    good = latest.get(c, "") == ""
-                    ok_all &= good
-                    calc_lines.append(f"| {sid} | {latest['date']} | y/y needs {prev_d} | FRED has no {prev_d} value | {latest.get(c) or 'blank'} | {'PASS' if good else 'FAIL'} |")
-                    continue
-                hand = (fred[latest["date"]] / fred[prev_d] - 1) * 100
-                formula = f"({fred[latest['date']]:g} / {fred[prev_d]:g} − 1) × 100  [vs {prev_d}]"
-            else:
-                prev_d = dates[i - 1]
-                hand = fred[latest["date"]] - fred[prev_d]
-                formula = f"{fred[latest['date']]:g} − {fred[prev_d]:g}  [vs {prev_d}]"
-            agent_v = float(latest[c])
-            good = abs(hand - agent_v) < 5e-4
-            ok_all &= good
-            calc_lines.append(f"| {sid} | {latest['date']} | {formula} | {hand:.4f} | {agent_v:.4f} | {'PASS' if good else 'FAIL'} |")
+        checks = [latest]
+        # If the latest y/y is blank (data gap), also hand-check the newest row that has one.
+        if "yoy_pct" in ind.get("csv_calcs", []) and latest.get("yoy_pct", "") == "":
+            filled = [r for r in rows if r.get("yoy_pct", "") != ""]
+            if filled:
+                checks.append(filled[-1])
+        for latest in checks:
+          i = dates.index(latest["date"]) if latest["date"] in dates else None
+          for c in ind.get("csv_calcs", []):
+              if i is None:
+                  calc_lines.append(f"| {sid} | {latest['date']} | {c} | date not on FRED | {latest.get(c)} | FAIL |")
+                  ok_all = False
+                  continue
+              if c == "yoy_pct":
+                  prev_d = _year_earlier(latest["date"])          # same month last year, by date
+                  if prev_d not in fred:
+                      good = latest.get(c, "") == ""
+                      ok_all &= good
+                      calc_lines.append(f"| {sid} | {latest['date']} | y/y needs {prev_d} | FRED has no {prev_d} value | {latest.get(c) or 'blank'} | {'PASS' if good else 'FAIL'} |")
+                      continue
+                  hand = (fred[latest["date"]] / fred[prev_d] - 1) * 100
+                  formula = f"({fred[latest['date']]:g} / {fred[prev_d]:g} − 1) × 100  [vs {prev_d}]"
+              else:
+                  prev_d = dates[i - 1]
+                  hand = fred[latest["date"]] - fred[prev_d]
+                  formula = f"{fred[latest['date']]:g} − {fred[prev_d]:g}  [vs {prev_d}]"
+              agent_v = float(latest[c])
+              good = abs(hand - agent_v) < 5e-4
+              ok_all &= good
+              calc_lines.append(f"| {sid} | {latest['date']} | {formula} | {hand:.4f} | {agent_v:.4f} | {'PASS' if good else 'FAIL'} |")
     lines += [""] + calc_lines + [""]
 
     # ---- 3 & 4: behaviour tests on a copy of the data --------------------------
