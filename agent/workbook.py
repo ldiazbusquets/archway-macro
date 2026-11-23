@@ -34,7 +34,8 @@ def _num(v):
         return v if v not in ("", None) else None
 
 
-def write_workbook(out: Path, rows: list[dict], status_lines: list[str], run_at: str, mode: str) -> Path:
+def write_workbook(out: Path, rows: list[dict], status_lines: list[str], run_at: str, mode: str,
+                   calendar: list[dict] | None = None) -> Path:
     wb = Workbook()
     ws = wb.active
     ws.title = "This week"
@@ -45,8 +46,12 @@ def write_workbook(out: Path, rows: list[dict], status_lines: list[str], run_at:
         ws["A3"] = "DEMO DATA: synthetic numbers, not real economic data."
         ws["A3"].font = Font(bold=True, color="B3261E")
 
+    nxt = {}
+    for e in calendar or []:
+        if e["date"] and e["series_id"] not in nxt:
+            nxt[e["series_id"]] = e["date"]
     cols = ["Indicator", "FRED ID", "Latest date", "Latest value", "Headline", "Headline value",
-            "Prior date", "Prior value", "New data this run", "Flags", "FRED page"]
+            "Prior date", "Prior value", "New data this run", "Next release", "Flags", "FRED page"]
     r0 = 5
     for j, c in enumerate(cols, 1):
         cell = ws.cell(row=r0, column=j, value=c)
@@ -56,7 +61,7 @@ def write_workbook(out: Path, rows: list[dict], status_lines: list[str], run_at:
         added = r.get("csv", {}).get("added", 0)
         vals = [r["name"], r["id"], r.get("latest_date"), r.get("latest_value"), r.get("headline_label"),
                 r.get("headline"), r.get("prior_date"), r.get("prior_value"),
-                f"Yes ({added} rows)" if added else "No", flags or "None", r["source_url"]]
+                f"Yes ({added} rows)" if added else "No", nxt.get(r["id"], "Not published"), flags or "None", r["source_url"]]
         for j, v in enumerate(vals, 1):
             ws.cell(row=i, column=j, value=v)
         if any(f["severity"] == "error" for f in r.get("flags", [])):
@@ -68,17 +73,43 @@ def write_workbook(out: Path, rows: list[dict], status_lines: list[str], run_at:
         if fill:
             for j in range(1, len(cols) + 1):
                 ws.cell(row=i, column=j).fill = fill
-        ws.cell(row=i, column=11).hyperlink = r["source_url"]
+        ws.cell(row=i, column=12).hyperlink = r["source_url"]
 
     s0 = r0 + len(rows) + 2
     ws.cell(row=s0, column=1, value="Status").font = Font(bold=True)
     for k, line in enumerate(status_lines, s0 + 1):
         ws.cell(row=k, column=1, value=line)
-    for j, w in enumerate([34, 11, 12, 13, 14, 14, 12, 12, 17, 60, 40], 1):
+    for j, w in enumerate([34, 11, 12, 13, 14, 14, 12, 12, 17, 13, 60, 40], 1):
         ws.column_dimensions[get_column_letter(j)].width = w
     for row in ws.iter_rows(min_row=r0 + 1, max_row=r0 + len(rows)):
-        row[9].alignment = Alignment(wrap_text=True, vertical="top")
+        row[10].alignment = Alignment(wrap_text=True, vertical="top")
     ws.freeze_panes = ws.cell(row=r0 + 1, column=1)
+
+    # Release calendar sheet: the source for the deck's "coming up next week" slide.
+    cs = wb.create_sheet("Release calendar")
+    cs["A1"] = "Upcoming releases for the tracked indicators (from FRED's release schedule)"
+    cs["A1"].font = Font(bold=True, size=12)
+    hdr = ["Date", "Day", "Indicator", "FRED ID", "Release", "Covers", "Next 7 days", "Note", "Schedule"]
+    for j, c in enumerate(hdr, 1):
+        cell = cs.cell(row=3, column=j, value=c)
+        cell.font, cell.fill = HEAD, HEAD_FILL
+    for i, e in enumerate(calendar or [], 4):
+        day = ""
+        if e["date"]:
+            from datetime import date
+            day = date.fromisoformat(e["date"]).strftime("%a")
+        vals = [e["date"] or "Not published", day, e["indicator"], e["series_id"], e["release"], e["covers"] or "",
+                "Yes" if e["next_week"] else "", e["note"], e["source"]]
+        for j, v in enumerate(vals, 1):
+            cs.cell(row=i, column=j, value=v)
+        if e["next_week"]:
+            for j in range(1, len(hdr) + 1):
+                cs.cell(row=i, column=j).fill = NEW_FILL
+        if e["source"].startswith("http"):
+            cs.cell(row=i, column=9).hyperlink = e["source"]
+    for j, w in enumerate([12, 6, 32, 10, 30, 24, 11, 44, 44], 1):
+        cs.column_dimensions[get_column_letter(j)].width = w
+    cs.freeze_panes = "A4"
 
     for r in rows:
         path = out / "csv" / f"{r['id']}.csv"

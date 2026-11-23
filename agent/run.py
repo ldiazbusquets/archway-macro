@@ -5,6 +5,7 @@
 
 Writes to <output_dir> (default docs/data; demo runs default to demo_output/):
     csv/<ID>.csv    saved history per indicator: new dates appended, never duplicated
+    (calendar)      upcoming FRED release dates for each indicator, in latest.json, the workbook and status.txt
     macro_update.xlsx  everything on one workbook: a "This week" summary + one sheet per indicator
     status.txt      plain-English result of the last run (incl. "no new data")
     latest.json     everything the dashboard shows
@@ -32,6 +33,7 @@ from .compute import compute_metrics
 from .demo import apply_scenario, demo_series
 from .history import update_csv
 from .workbook import write_workbook
+from .calendar import calendar_lines, demo_calendar, live_calendar
 from .summarize import SUFFIX, ai_digest, rule_note
 from .validate import check_series, flag, snapshot
 
@@ -122,6 +124,14 @@ def main(argv: list[str] | None = None) -> int:
     if n_added == 0 and any("csv" in r for r in rows):
         status_lines.insert(0, "No new data for any indicator since the last run.")
 
+    # Release calendar: a problem here is reported but never fails the run.
+    try:
+        cal, cal_errors = (demo_calendar(cfg["indicators"], today) if args.demo
+                           else live_calendar(cfg["indicators"], today, session))
+    except Exception as e:  # e.g. network down
+        cal, cal_errors = [], [f"Release calendar unavailable ({e})."]
+    status_lines += calendar_lines(cal) + cal_errors
+
     latest = {
         "agent_version": __version__,
         "mode": mode,
@@ -129,12 +139,13 @@ def main(argv: list[str] | None = None) -> int:
         "as_of": today.strftime("%Y-%m-%d"),
         "summary": {"indicators": len(rows), "errors": n_err, "to_review": n_rev, "new_releases": n_new, "rows_added": n_added},
         "status_lines": status_lines,
+        "calendar": cal,
         "ai_digest": ai_digest(rows) if not args.demo else None,
         "indicators": rows,
     }
     (out / "latest.json").write_text(json.dumps(latest, indent=1))
     (out / "state.json").write_text(json.dumps(new_state, indent=1))
-    write_workbook(out, rows, status_lines, run_at, mode)
+    write_workbook(out, rows, status_lines, run_at, mode, cal)
     with open(out / "run_log.jsonl", "a") as f:
         f.write(json.dumps({"run_at": run_at, "mode": mode, **latest["summary"],
                             "flags": [f"{r['id']}:{x['kind']}" for r in rows for x in r["flags"] if x["severity"] != "info"]}) + "\n")

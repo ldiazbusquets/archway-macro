@@ -100,6 +100,9 @@ h1 span{color:rgba(242,244,245,.5)}
 
 /* watchlist */
 .watch{margin-top:16px}
+.calp{margin-top:16px}
+.list .soon{color:var(--acc);font-weight:600}
+.list .cv{color:var(--dim);font:400 12px var(--mono);margin-left:6px}
 .seg{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--pill)}
 .seg button{border:0;background:transparent;border-radius:999px;color:var(--soft);font:500 12px var(--sans);padding:6px 12px;cursor:pointer}
 .seg button:hover{color:var(--ink)}
@@ -211,6 +214,11 @@ html.lt .state,html.lt .banner{background:rgba(255,255,255,.6);border-color:rgba
       <ul class="list" id="notes"></ul>
     </section>
   </div>
+
+  <section class="panel calp">
+    <div class="ph"><h2>Coming up</h2><span>FRED release schedule · next 45 days</span></div>
+    <ul class="list" id="cal"></ul>
+  </section>
 
   <section class="panel watch">
     <div class="ph"><h2>Watchlist</h2><div class="seg" id="seg" role="group" aria-label="Filter by group"></div></div>
@@ -324,6 +332,11 @@ function render(d){
   const groups=["All",...new Set(d.indicators.map(r=>r.group))];
   $("seg").innerHTML=groups.map(g=>`<button type="button" aria-pressed="${g===FILTER}" data-g="${esc(g)}">${esc(g)}</button>`).join("");
   $("seg").querySelectorAll("button").forEach(b=>b.onclick=()=>{FILTER=b.dataset.g;render(DATA);});
+  const cal=d.calendar||[];
+  $("cal").innerHTML=cal.length?cal.slice(0,8).map(e=>{const dt=e.date?new Date(e.date+"T00:00:00"):null;
+    const lbl=dt?dt.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}):"Not published";
+    return `<li><time class="${e.next_week?"soon":""}">${esc(lbl)}</time><span><b>${esc(e.indicator)}</b> · ${esc(e.release)}${(e.note||"").startsWith("Published every")?`<span class="cv">every business day</span>`:(e.covers?`<span class="cv">${esc(e.covers)}</span>`:"")}${e.note&&!e.note.startsWith("Published every")?`<span class="cv">${esc(e.note)}</span>`:""}${e.next_week?' <span class="sev info">NEXT 7 DAYS</span>':""}</span></li>`;}).join("")
+    :`<li><time>—</time><span>No release schedule available from the last run.</span></li>`;
   drawRows();
   if(d.status_lines&&d.status_lines.length)$("statusline").innerHTML=d.status_lines.map(esc).join("<br>")+`<br><span style="opacity:.7">Click a row for history, flags and the saved CSV. Placeholder indicators from Archway's published reports, to confirm with the committee.</span>`;
   $("foot").textContent=`Agent v${d.agent_version} · ${d.mode} mode`;

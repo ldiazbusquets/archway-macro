@@ -39,7 +39,8 @@ Tests (offline): `pytest -q`. Independent check against FRED: `python verify/ver
 | `config/indicators.yaml` | The watchlist: series, calculations, flag thresholds | **Students** (Macroeconomic Committee) |
 | `agent/fred.py` | FRED API client with retries | Maintainers |
 | `agent/history.py` | Per-indicator CSV: append new dates only, never rewrite saved rows | Maintainers |
-| `agent/workbook.py` | `macro_update.xlsx`: "This week" summary + one sheet per indicator | Maintainers |
+| `agent/workbook.py` | `macro_update.xlsx`: "This week" summary, release calendar, one sheet per indicator | Maintainers |
+| `agent/calendar.py` | Upcoming release dates from FRED (`series/release`, `release/dates`); never guessed | Maintainers |
 | `agent/compute.py` | Dashboard numbers: y/y, changes, trend, z-scores. Deterministic, no AI | Maintainers |
 | `agent/validate.py` | Flags: missing value, stale, unusual move, revision, new release | Maintainers |
 | `agent/summarize.py` | Rule-based notes; optional AI digest (off without a key) | Maintainers |

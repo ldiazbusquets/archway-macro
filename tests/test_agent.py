@@ -220,7 +220,7 @@ def test_one_workbook_holds_everything(tmp_path):
     out = tmp_path / "data"
     main(["--demo", "--out", str(out), "--today", "2026-11-17"])
     wb = load_workbook(out / "macro_update.xlsx")
-    assert wb.sheetnames == ["This week", "DGS10", "CPIAUCSL", "CPILFESL"]
+    assert wb.sheetnames == ["This week", "Release calendar", "DGS10", "CPIAUCSL", "CPILFESL"]
     ws = wb["This week"]
     ids = [ws.cell(row=r, column=2).value for r in range(6, 9)]
     assert ids == ["DGS10", "CPIAUCSL", "CPILFESL"]
@@ -228,3 +228,43 @@ def test_one_workbook_holds_everything(tmp_path):
     for r in range(6, 9):
         assert ws.cell(row=r, column=4).value == latest[ws.cell(row=r, column=2).value]["latest_value"]
     assert wb["CPIAUCSL"].max_row == len(_rows(out / "csv" / "CPIAUCSL.csv")) + 1
+
+
+
+# ---------- release calendar ----------
+
+def test_demo_calendar_lists_next_releases(tmp_path):
+    out = tmp_path / "data"
+    main(["--demo", "--out", str(out), "--today", "2026-11-17"])
+    d = json.loads((out / "latest.json").read_text())
+    cal = d["calendar"]
+    cpi = [e for e in cal if e["series_id"] == "CPIAUCSL"]
+    assert cpi[0]["date"] == "2026-12-13" and cpi[0]["covers"] == "November 2026 data"
+    dgs = [e for e in cal if e["series_id"] == "DGS10"]
+    assert len(dgs) == 1 and dgs[0]["next_week"]                     # daily series: one line, not one per day
+    assert [e["date"] for e in cal if e["date"]] == sorted(e["date"] for e in cal if e["date"])
+    status = (out / "status.txt").read_text()
+    assert "Coming up in the next 7 days:" in status
+
+
+def test_live_calendar_parses_fred_schedule(monkeypatch):
+    """Parser check with FRED-shaped responses (no network)."""
+    import agent.calendar as calmod
+    def fake_get(path, params, session):
+        if path == "series/release":
+            return {"releases": [{"id": 10, "name": "Consumer Price Index"}]}
+        return {"release_dates": [{"release_id": 10, "date": d} for d in ["2026-11-13", "2026-12-10", "2027-01-13"]]}
+    monkeypatch.setattr(calmod, "_get", fake_get)
+    ind = {"id": "CPIAUCSL", "name": "CPI", "frequency": "M"}
+    cal, errs = calmod.live_calendar([ind], pd.Timestamp("2026-12-05"), None)
+    assert not errs and [e["date"] for e in cal] == ["2026-12-10", "2027-01-13"]   # past Nov 13 dropped
+    assert cal[0]["next_week"] and not cal[1]["next_week"]
+    assert cal[0]["covers"] == "November 2026 data" and cal[1]["covers"] == "December 2026 data"
+    assert cal[0]["release"] == "Consumer Price Index"
+
+
+def test_missing_schedule_is_reported_not_guessed(monkeypatch):
+    import agent.calendar as calmod
+    monkeypatch.setattr(calmod, "_get", lambda p, q, s: {"releases": [{"id": 1, "name": "X"}]} if p == "series/release" else {"release_dates": []})
+    cal, _ = calmod.live_calendar([{"id": "X", "name": "X", "frequency": "M"}], pd.Timestamp("2026-12-05"), None)
+    assert cal[0]["date"] is None and "No scheduled release date" in cal[0]["note"]

@@ -19,8 +19,8 @@ Chosen from the macro team interview: Treasuries / risk-free rate (updated weekl
 1. Open the repo → **Actions** → **Update macro data** → **Run workflow** → **Run workflow**.
 2. Wait about 1 minute. Green check = done. Red X = something needs a look (step 4).
 3. Read the result:
-   - `docs/data/status.txt`: one line per indicator, e.g. *"UNRATE: 1 new observation(s) added (2026-10-01)"* or *"no new data since the last run"*.
-   - `docs/data/macro_update.xlsx`: everything on one workbook ("This week" summary + one sheet per indicator). Download it from GitHub and open in Excel.
+   - `docs/data/status.txt`: one line per indicator (e.g. *"no new data since the last run"*), then *"Coming up in the next 7 days"* with each scheduled release.
+   - `docs/data/macro_update.xlsx`: everything on one workbook. "This week" summary, a **Release calendar** sheet (next release dates from FRED, for the deck's "coming up next week" slide), and one sheet per indicator. Download it from GitHub and open in Excel.
    - `docs/data/csv/<ID>.csv`: the saved history per indicator.
    - The dashboard: https://ldiazbusquets.github.io/archway-macro/
 4. If the run is red: open the run → **Run agent** step. The message names the indicator and the problem. The saved CSVs are never changed by a failed fetch.
