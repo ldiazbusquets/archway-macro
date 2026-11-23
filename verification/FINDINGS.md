@@ -22,3 +22,7 @@ Problems found while verifying the agent, and what was done about them. The cour
 ## 2. Related: "change from prior month" spans two months after the gap
 
 For UNRATE, the November 2025 `change` is measured against September 2025, because October 2025 doesn't exist. The CSV now records this in the `prior_date` column, so it's visible instead of implied.
+
+## Note: indicator change (2026-11-22)
+
+After the macro team interview, the tracked indicators changed from CPI / unemployment / 10Y–2Y to the risk-free rate (DGS10, placeholder maturity), headline CPI and core CPI. The UNRATE and T10Y2Y CSVs were removed. Finding 1 still applies, because CPI and core CPI both lack an October 2025 value.

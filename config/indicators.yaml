@@ -1,10 +1,12 @@
 # Archway Macro-Monitoring Agent: indicator watchlist
 #
 # SCOPE: the course brief allows 1 to 3 indicators that Archway already monitors.
-# These three are PLACEHOLDERS taken from the indicators the Macroeconomic
-# Committee discusses in its own published reports (2023 Annual Report:
-# CPI inflation y/y, the unemployment rate, the Treasury yield curve).
-# NEEDS CLARIFICATION: confirm the final list, and the calculations, with Archway.
+# Chosen from the macro team interview (recorded 2026-11-17):
+#   - risk-free rate / Treasuries: "a big one", updated every week [01:42, 01:56]
+#   - inflation, "both core and regular" [02:06]
+# NEEDS CLARIFICATION with Archway: which Treasury maturity counts as the
+# risk-free rate (10-year used as a placeholder), CPI vs PCE for inflation,
+# and which calculations they show. GDP and Michigan sentiment were also named.
 # Students own this file; the agent never edits it.
 #
 # Fields
@@ -30,9 +32,9 @@ settings:
   output_dir: "docs/data"       # GitHub Pages serves /docs
 
 indicators:
-  - {id: CPIAUCSL, name: "CPI inflation (all items)", group: Inflation, frequency: M, units: "Index 1982-84=100",
-     headline: yoy_pct, csv_calcs: [yoy_pct], stale_days: 75, z_flag: 2.0}
-  - {id: UNRATE, name: "Unemployment rate", group: Labor, frequency: M, units: "%",
-     headline: level, csv_calcs: [change], stale_days: 75, z_flag: 2.0}
-  - {id: T10Y2Y, name: "Yield curve: 10Y minus 2Y", group: Rates, frequency: D, units: "pp",
+  - {id: DGS10, name: "Risk-free rate: 10-year Treasury", group: Rates, frequency: D, units: "%",
      headline: level, csv_calcs: [change], stale_days: 7, z_flag: 2.5}
+  - {id: CPIAUCSL, name: "Inflation: CPI (headline)", group: Inflation, frequency: M, units: "Index 1982-84=100",
+     headline: yoy_pct, csv_calcs: [yoy_pct], stale_days: 75, z_flag: 2.0}
+  - {id: CPILFESL, name: "Inflation: core CPI", group: Inflation, frequency: M, units: "Index 1982-84=100",
+     headline: yoy_pct, csv_calcs: [yoy_pct], stale_days: 75, z_flag: 2.0}

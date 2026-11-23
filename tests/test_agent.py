@@ -133,8 +133,9 @@ def test_csv_calculation_matches_hand_calculation(tmp_path):
     rows = {r["date"]: r for r in _rows(out / "csv" / "CPIAUCSL.csv")}
     now, year_ago = float(rows["2026-10-01"]["value"]), float(rows["2025-10-01"]["value"])
     assert float(rows["2026-10-01"]["yoy_pct"]) == pytest.approx((now / year_ago - 1) * 100, abs=1e-3)
-    u = {r["date"]: r for r in _rows(out / "csv" / "UNRATE.csv")}
-    assert float(u["2026-10-01"]["change"]) == pytest.approx(float(u["2026-10-01"]["value"]) - float(u["2026-09-01"]["value"]), abs=1e-6)
+    t = _rows(out / "csv" / "DGS10.csv")
+    assert float(t[-1]["change"]) == pytest.approx(float(t[-1]["value"]) - float(t[-2]["value"]), abs=1e-6)
+    assert t[-1]["prior_date"] == t[-2]["date"]
 
 
 def test_failed_fetch_keeps_saved_csv_and_last_good_values(tmp_path, monkeypatch):
@@ -161,13 +162,13 @@ def test_failed_fetch_keeps_saved_csv_and_last_good_values(tmp_path, monkeypatch
 def test_invalid_series_id_is_reported_and_others_still_run(tmp_path):
     """Brief: test an invalid series ID."""
     cfg = tmp_path / "bad.yaml"
-    text = open("config/indicators.yaml").read().replace("id: UNRATE,", "id: UNRATEXX,")
+    text = open("config/indicators.yaml").read().replace("id: CPILFESL,", "id: CPILFESLXX,")
     cfg.write_text(text)
     out = tmp_path / "data"
     assert main(["--demo", "--config", str(cfg), "--out", str(out), "--today", "2026-11-17"]) == 2
     status = (out / "status.txt").read_text()
-    assert "UNRATEXX: ERROR" in status and "does not exist" in status
-    assert (out / "csv" / "CPIAUCSL.csv").exists() and not (out / "csv" / "UNRATEXX.csv").exists()
+    assert "CPILFESLXX: ERROR" in status and "does not exist" in status
+    assert (out / "csv" / "CPIAUCSL.csv").exists() and not (out / "csv" / "CPILFESLXX.csv").exists()
 
 
 def test_demo_defaults_to_its_own_folder(tmp_path, monkeypatch):
@@ -211,3 +212,19 @@ def test_headline_is_blank_not_stale_when_yoy_cannot_be_computed():
     assert m["latest_date"] == "2026-10-01" and m["headline"] is None and m["headline_gap"] == "2025-10-01"
     flags = check_series(s, ind, m, None, pd.Timestamp("2026-11-17"))
     assert any(f["kind"] == "calc_gap" for f in flags)
+
+
+def test_one_workbook_holds_everything(tmp_path):
+    """Interview pain point [08:21]: 'getting it all onto one sheet'."""
+    from openpyxl import load_workbook
+    out = tmp_path / "data"
+    main(["--demo", "--out", str(out), "--today", "2026-11-17"])
+    wb = load_workbook(out / "macro_update.xlsx")
+    assert wb.sheetnames == ["This week", "DGS10", "CPIAUCSL", "CPILFESL"]
+    ws = wb["This week"]
+    ids = [ws.cell(row=r, column=2).value for r in range(6, 9)]
+    assert ids == ["DGS10", "CPIAUCSL", "CPILFESL"]
+    latest = {r["id"]: r for r in json.loads((out / "latest.json").read_text())["indicators"]}
+    for r in range(6, 9):
+        assert ws.cell(row=r, column=4).value == latest[ws.cell(row=r, column=2).value]["latest_value"]
+    assert wb["CPIAUCSL"].max_row == len(_rows(out / "csv" / "CPIAUCSL.csv")) + 1

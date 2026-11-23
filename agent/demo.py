@@ -50,8 +50,8 @@ def release_date(series_id: str, frequency: str, d: pd.Timestamp) -> pd.Timestam
 # Demo-only "events" so every flag type shows up in a classroom demo.
 SCENARIO = {
     "CPIAUCSL": "revise",      # an already-published value changes
-    "UNRATE": "spike",         # unusual move
-    "T10Y2Y": "missing",       # FRED returns "." for the latest date
+    "CPILFESL": "spike",       # unusual move
+    "DGS10": "missing",        # FRED returns "." for the latest date
 }
 
 
@@ -61,7 +61,8 @@ def apply_scenario(series_id: str, s: pd.Series) -> pd.Series:
     if kind == "revise" and len(s) > 2:
         s.iloc[-2] = round(s.iloc[-2] * 1.0015, 3)
     elif kind == "spike":
-        s.iloc[-1] = round(s.iloc[-2] + 0.6, 3)
+        pct = SHAPES.get(series_id, (0, 0, 0, None, "abs"))[4].startswith("pct")
+        s.iloc[-1] = round(s.iloc[-2] * 1.01 if pct else s.iloc[-2] + 0.6, 3)
     elif kind == "missing":
         s.iloc[-1] = float("nan")
     elif kind == "fetch_fail":

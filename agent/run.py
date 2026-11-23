@@ -5,6 +5,7 @@
 
 Writes to <output_dir> (default docs/data; demo runs default to demo_output/):
     csv/<ID>.csv    saved history per indicator: new dates appended, never duplicated
+    macro_update.xlsx  everything on one workbook: a "This week" summary + one sheet per indicator
     status.txt      plain-English result of the last run (incl. "no new data")
     latest.json     everything the dashboard shows
     state.json      memory between runs (last dates, recent values for revision checks)
@@ -30,6 +31,7 @@ from . import __version__
 from .compute import compute_metrics
 from .demo import apply_scenario, demo_series
 from .history import update_csv
+from .workbook import write_workbook
 from .summarize import SUFFIX, ai_digest, rule_note
 from .validate import check_series, flag, snapshot
 
@@ -132,6 +134,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     (out / "latest.json").write_text(json.dumps(latest, indent=1))
     (out / "state.json").write_text(json.dumps(new_state, indent=1))
+    write_workbook(out, rows, status_lines, run_at, mode)
     with open(out / "run_log.jsonl", "a") as f:
         f.write(json.dumps({"run_at": run_at, "mode": mode, **latest["summary"],
                             "flags": [f"{r['id']}:{x['kind']}" for r in rows for x in r["flags"] if x["severity"] != "info"]}) + "\n")

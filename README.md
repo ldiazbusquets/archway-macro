@@ -11,7 +11,7 @@ FRED API ─► retrieve ─► save new rows (csv/<ID>.csv) ─► calculate �
                                                                                      └─► students verify & interpret
 ```
 
-**Scope:** the course brief allows 1–3 indicators that Archway already monitors. The current three (CPI y/y, unemployment rate, 10Y–2Y yield curve) are placeholders from the Macroeconomic Committee's published reports, to confirm with Archway.
+**Scope:** the course brief allows 1–3 indicators that Archway already monitors. From the macro team interview: the risk-free rate (10-year Treasury as a placeholder until Archway names the maturity), headline CPI and core CPI. Each run also writes `macro_update.xlsx`, one workbook with everything, because the team named "getting it all onto one sheet" as its repetitive step.
 
 ## Quick start
 
@@ -39,13 +39,14 @@ Tests (offline): `pytest -q`. Independent check against FRED: `python verify/ver
 | `config/indicators.yaml` | The watchlist: series, calculations, flag thresholds | **Students** (Macroeconomic Committee) |
 | `agent/fred.py` | FRED API client with retries | Maintainers |
 | `agent/history.py` | Per-indicator CSV: append new dates only, never rewrite saved rows | Maintainers |
+| `agent/workbook.py` | `macro_update.xlsx`: "This week" summary + one sheet per indicator | Maintainers |
 | `agent/compute.py` | Dashboard numbers: y/y, changes, trend, z-scores. Deterministic, no AI | Maintainers |
 | `agent/validate.py` | Flags: missing value, stale, unusual move, revision, new release | Maintainers |
 | `agent/summarize.py` | Rule-based notes; optional AI digest (off without a key) | Maintainers |
 | `agent/run.py` | Orchestrates one run, writes outputs, sets exit code | Maintainers |
 | `agent/demo.py` | Synthetic data for demos and tests | Maintainers |
 | `docs/index.html` | Dashboard (static, no build step) | Maintainers |
-| `docs/data/` | Agent output: `csv/<ID>.csv`, `status.txt`, `latest.json`, `state.json`, `run_log.jsonl` | **The agent only** |
+| `docs/data/` | Agent output: `macro_update.xlsx`, `csv/<ID>.csv`, `status.txt`, `latest.json`, `state.json`, `run_log.jsonl` | **The agent only** |
 | `verify/verify_fred.py` | Independent checker (no agent code): source comparison, hand calc, run twice, invalid ID | Maintainers |
 | `verification/REPORT.md` | Latest checker output, for Assignment 3 | **The checker only** |
 | `.github/workflows/` | Manual data run, verification run, tests on every push | Maintainers |

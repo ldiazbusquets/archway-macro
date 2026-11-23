@@ -4,15 +4,15 @@ For anyone on the team, or a future Archway student, who needs to run the agent.
 
 ## What it does
 
-Pulls 3 indicators from FRED, adds any new observations to a CSV per indicator, calculates the changes Archway uses, and writes a plain-English status. The dashboard shows the results. **Students decide what the numbers mean.**
+Pulls 3 indicators from FRED, adds any new observations to a CSV per indicator, calculates the changes, and puts it **all on one Excel workbook** (`macro_update.xlsx`) with a plain-English status. That workbook is the "getting it all onto one sheet" step the macro team called repetitive (interview, 08:21). **Students still make the charts for the deck and decide what the numbers mean.**
 
 | Indicator | FRED ID | Saved calculation |
 |---|---|---|
-| CPI inflation (all items) | CPIAUCSL | year-over-year % change |
-| Unemployment rate | UNRATE | change from prior month (pp) |
-| Yield curve: 10Y minus 2Y | T10Y2Y | change from prior day (pp) |
+| Risk-free rate: 10-year Treasury | DGS10 | change from prior day (pp) |
+| Inflation: CPI (headline) | CPIAUCSL | year-over-year % change |
+| Inflation: core CPI | CPILFESL | year-over-year % change |
 
-These are placeholders from Archway's published reports. Confirm them with the Macroeconomic Committee and edit `config/indicators.yaml` if they change.
+Chosen from the macro team interview: Treasuries / risk-free rate (updated weekly) and inflation, "both core and regular". **To confirm with Archway:** which Treasury maturity is their risk-free rate, CPI or PCE, and which calculations they show. Edit `config/indicators.yaml` if any change.
 
 ## Run it (GitHub, recommended)
 
@@ -20,7 +20,8 @@ These are placeholders from Archway's published reports. Confirm them with the M
 2. Wait about 1 minute. Green check = done. Red X = something needs a look (step 4).
 3. Read the result:
    - `docs/data/status.txt`: one line per indicator, e.g. *"UNRATE: 1 new observation(s) added (2026-10-01)"* or *"no new data since the last run"*.
-   - `docs/data/csv/<ID>.csv`: the saved history.
+   - `docs/data/macro_update.xlsx`: everything on one workbook ("This week" summary + one sheet per indicator). Download it from GitHub and open in Excel.
+   - `docs/data/csv/<ID>.csv`: the saved history per indicator.
    - The dashboard: https://ldiazbusquets.github.io/archway-macro/
 4. If the run is red: open the run → **Run agent** step. The message names the indicator and the problem. The saved CSVs are never changed by a failed fetch.
 

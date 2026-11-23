@@ -13,7 +13,7 @@ def _setup(tmp_path, monkeypatch):
     monkeypatch.setattr(v, "DATA", out)
     monkeypatch.setattr(v, "REPORT", tmp_path / "REPORT.md")
     monkeypatch.delenv("FRED_API_KEY", raising=False)
-    freq = {"CPIAUCSL": "M", "UNRATE": "M", "T10Y2Y": "D"}
+    freq = {"CPIAUCSL": "M", "CPILFESL": "M", "DGS10": "D"}
     def fake_graph(sid):
         s = demo_series(sid, freq[sid], "2000-01-01", "2026-11-17").dropna()
         return {d.strftime("%Y-%m-%d"): float(x) for d, x in s.items()}
@@ -30,7 +30,7 @@ def test_checker_passes_on_correct_data(tmp_path, monkeypatch):
 
 def test_checker_catches_a_wrong_saved_value(tmp_path, monkeypatch):
     v, out = _setup(tmp_path, monkeypatch)
-    p = out / "csv" / "UNRATE.csv"
+    p = out / "csv" / "CPILFESL.csv"
     lines = p.read_text().splitlines()
     parts = lines[-1].split(",")
     parts[2] = "9.99"                                  # corrupt the latest saved value
