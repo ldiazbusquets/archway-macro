@@ -4,3 +4,4 @@
 {"run_at": "2026-11-17T20:16:27+00:00", "mode": "live", "indicators": 14, "errors": 0, "to_review": 0, "new_releases": 0, "flags": []}
 {"run_at": "2026-11-19T15:37:27+00:00", "mode": "live", "indicators": 3, "errors": 0, "to_review": 0, "new_releases": 1, "rows_added": 1883, "flags": []}
 {"run_at": "2026-11-19T15:40:20+00:00", "mode": "live", "indicators": 3, "errors": 0, "to_review": 1, "new_releases": 0, "rows_added": 1883, "flags": ["CPIAUCSL:calc_gap"]}
+{"run_at": "2026-11-23T01:00:34+00:00", "mode": "live", "indicators": 3, "errors": 0, "to_review": 2, "new_releases": 0, "rows_added": 1803, "flags": ["CPIAUCSL:calc_gap", "CPILFESL:calc_gap"]}

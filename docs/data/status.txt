@@ -1,5 +1,5 @@
-Run at 2026-11-19T15:40:20+00:00 (live)
-[live] 3 indicators · 1883 rows added · 1 to review · 0 errors
-CPIAUCSL: created csv/CPIAUCSL.csv with 81 observations (latest 2026-10-01).
-UNRATE: created csv/UNRATE.csv with 81 observations (latest 2026-10-01).
-T10Y2Y: created csv/T10Y2Y.csv with 1721 observations (latest 2026-11-18).
+Run at 2026-11-23T01:00:34+00:00 (live)
+[live] 3 indicators · 1803 rows added · 2 to review · 0 errors
+DGS10: created csv/DGS10.csv with 1722 observations (latest 2026-11-19).
+CPIAUCSL: no new data since the last run (latest 2026-10-01).
+CPILFESL: created csv/CPILFESL.csv with 81 observations (latest 2026-10-01).
