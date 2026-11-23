@@ -26,3 +26,7 @@ For UNRATE, the November 2025 `change` is measured against September 2025, becau
 ## Note: indicator change (2026-11-22)
 
 After the macro team interview, the tracked indicators changed from CPI / unemployment / 10Y–2Y to the risk-free rate (DGS10, placeholder maturity), headline CPI and core CPI. The UNRATE and T10Y2Y CSVs were removed. Finding 1 still applies, because CPI and core CPI both lack an October 2025 value.
+
+## Check: release calendar against the official BLS schedule (2026-11-22, passed)
+
+The first live run listed the next CPI and core CPI release as 2026-12-10 (November 2026 data), read from FRED's release schedule. The BLS CPI release schedule (bls.gov/schedule/news_release/cpi.htm) lists November 2026 CPI for Dec. 10, 2026, 8:30 AM. They match. The same BLS page confirms the October 2025 CPI release was canceled (2025 lapse in appropriations), which is the gap behind Finding 1.
