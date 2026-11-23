@@ -1,19 +1,54 @@
 {
  "agent_version": "0.1.0",
  "mode": "live",
- "run_at": "2026-11-23T01:00:34+00:00",
+ "run_at": "2026-11-23T01:08:47+00:00",
  "as_of": "2026-11-23",
  "summary": {
   "indicators": 3,
   "errors": 0,
   "to_review": 2,
   "new_releases": 0,
-  "rows_added": 1803
+  "rows_added": 0
  },
  "status_lines": [
-  "DGS10: created csv/DGS10.csv with 1722 observations (latest 2026-11-19).",
+  "No new data for any indicator since the last run.",
+  "DGS10: no new data since the last run (latest 2026-11-19).",
   "CPIAUCSL: no new data since the last run (latest 2026-10-01).",
-  "CPILFESL: created csv/CPILFESL.csv with 81 observations (latest 2026-10-01)."
+  "CPILFESL: no new data since the last run (latest 2026-10-01).",
+  "Coming up in the next 7 days:",
+  "  Mon Nov 23: Risk-free rate: 10-year Treasury (H.15 Selected Interest Rates), prior business day's data (then every business day)"
+ ],
+ "calendar": [
+  {
+   "series_id": "DGS10",
+   "indicator": "Risk-free rate: 10-year Treasury",
+   "release": "H.15 Selected Interest Rates",
+   "source": "https://fred.stlouisfed.org/releases/calendar?rid=18",
+   "date": "2026-11-23",
+   "covers": "prior business day's data",
+   "next_week": true,
+   "note": "Published every business day; next date shown."
+  },
+  {
+   "series_id": "CPIAUCSL",
+   "indicator": "Inflation: CPI (headline)",
+   "release": "Consumer Price Index",
+   "source": "https://fred.stlouisfed.org/releases/calendar?rid=10",
+   "date": "2026-12-10",
+   "covers": "November 2026 data",
+   "next_week": false,
+   "note": ""
+  },
+  {
+   "series_id": "CPILFESL",
+   "indicator": "Inflation: core CPI",
+   "release": "Consumer Price Index",
+   "source": "https://fred.stlouisfed.org/releases/calendar?rid=10",
+   "date": "2026-12-10",
+   "covers": "November 2026 data",
+   "next_week": false,
+   "note": ""
+  }
  ],
  "ai_digest": null,
  "indicators": [
@@ -1082,7 +1117,7 @@
    "note": "Risk-free rate: 10-year Treasury was 5.04% on Nov 19, 2026, down 3 bp.",
    "csv": {
     "file": "csv/DGS10.csv",
-    "added": 1722,
+    "added": 0,
     "rows": 1722
    }
   },
@@ -1636,7 +1671,7 @@
    "note": "Inflation: core CPI: index at 339.9 in Oct 2026; the year-over-year change isn't available because FRED has no value for Oct 2025.",
    "csv": {
     "file": "csv/CPILFESL.csv",
-    "added": 81,
+    "added": 0,
     "rows": 81
    }
   }

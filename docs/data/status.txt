@@ -1,5 +1,8 @@
-Run at 2026-11-23T01:00:34+00:00 (live)
-[live] 3 indicators · 1803 rows added · 2 to review · 0 errors
-DGS10: created csv/DGS10.csv with 1722 observations (latest 2026-11-19).
+Run at 2026-11-23T01:08:47+00:00 (live)
+[live] 3 indicators · 0 rows added · 2 to review · 0 errors
+No new data for any indicator since the last run.
+DGS10: no new data since the last run (latest 2026-11-19).
 CPIAUCSL: no new data since the last run (latest 2026-10-01).
-CPILFESL: created csv/CPILFESL.csv with 81 observations (latest 2026-10-01).
+CPILFESL: no new data since the last run (latest 2026-10-01).
+Coming up in the next 7 days:
+  Mon Nov 23: Risk-free rate: 10-year Treasury (H.15 Selected Interest Rates), prior business day's data (then every business day)
